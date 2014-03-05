@@ -1,12 +1,12 @@
 /*
-*   $Id: erlang.c 443 2006-05-30 04:37:13Z darren $
+*   $Id: elixir.c 443 2006-05-30 04:37:13Z darren $
 *
 *   Copyright (c) 2003, Brent Fulgham <bfulgham@debian.org>
 *
 *   This source code is released for free distribution under the terms of the
 *   GNU General Public License.
 *
-*   This module contains functions for generating tags for Erlang language
+*   This module contains functions for generating tags for Elixir language
 *   files.  Some of the parsing constructs are based on the Emacs 'etags'
 *   program by Francesco Potori <pot@gnu.org>
 */
@@ -28,9 +28,9 @@
 */
 typedef enum {
     K_MACRO, K_FUNCTION, K_MODULE, K_RECORD
-} erlangKind;
+} elixirKind;
 
-static kindOption ErlangKinds[] = {
+static kindOption ElixirKinds[] = {
     {TRUE, 'd', "macro",    "macro definitions"},
     {TRUE, 'f', "function", "functions"},
     {TRUE, 'm', "module",   "modules"},
@@ -75,14 +75,14 @@ static const unsigned char *parseIdentifier (
 }
 
 static void makeMemberTag (
-        vString *const identifier, erlangKind kind, vString *const module)
+        vString *const identifier, elixirKind kind, vString *const module)
 {
-    if (ErlangKinds [kind].enabled  &&  vStringLength (identifier) > 0)
+    if (ElixirKinds [kind].enabled  &&  vStringLength (identifier) > 0)
     {
         tagEntryInfo tag;
         initTagEntry (&tag, vStringValue (identifier));
-        tag.kindName = ErlangKinds[kind].name;
-        tag.kind = ErlangKinds[kind].letter;
+        tag.kindName = ElixirKinds[kind].name;
+        tag.kind = ElixirKinds[kind].letter;
 
         if (module != NULL  &&  vStringLength (module) > 0)
         {
@@ -97,18 +97,18 @@ static void parseModuleTag (const unsigned char *cp, vString *const module)
 {
     vString *const identifier = vStringNew ();
     parseIdentifier (cp, identifier);
-    makeSimpleTag (identifier, ErlangKinds, K_MODULE);
+    makeSimpleTag (identifier, ElixirKinds, K_MODULE);
 
     /* All further entries go in the new module */
     vStringCopy (module, identifier);
     vStringDelete (identifier);
 }
 
-static void parseSimpleTag (const unsigned char *cp, erlangKind kind)
+static void parseSimpleTag (const unsigned char *cp, elixirKind kind)
 {
     vString *const identifier = vStringNew ();
     parseIdentifier (cp, identifier);
-    makeSimpleTag (identifier, ErlangKinds, kind);
+    makeSimpleTag (identifier, ElixirKinds, kind);
     vStringDelete (identifier);
 }
 
@@ -122,9 +122,10 @@ static void parseFunctionTag (const unsigned char *cp, vString *const module)
 
 /*
  * Directives are of the form:
- * -module(foo)
- * -define(foo, bar)
- * -record(graph, {vtab = notable, cyclic = true}).
+ * def foo
+ * defp foo
+ * defmodule
+ * defrecord
  */
 static void parseDirective (const unsigned char *cp, vString *const module)
 {
@@ -136,21 +137,25 @@ static void parseDirective (const unsigned char *cp, vString *const module)
     const char *const drtv = vStringValue (directive);
     cp = parseIdentifier (cp, directive);
     cp = skipSpace (cp);
-    if (*cp == '(')
-        ++cp;
+    /* if (*cp == '(') */
+    /*     ++cp; */
 
-    if (strcmp (drtv, "record") == 0)
-        parseSimpleTag (cp, K_RECORD);
-    else if (strcmp (drtv, "define") == 0)
+    if (strcmp (drtv, "def") == 0)
+        parseSimpleTag (cp, K_FUNCTION);
+    else if(strcmp (drtv, "defp") == 0)
+        parseSimpleTag (cp, K_FUNCTION);
+    else if (strcmp (drtv, "defmacro") == 0)
         parseSimpleTag (cp, K_MACRO);
-    else if (strcmp (drtv, "module") == 0)
+    else if (strcmp (drtv, "defrecord") == 0)
+        parseSimpleTag (cp, K_RECORD);
+    else if (strcmp (drtv, "defmodule") == 0)
         parseModuleTag (cp, module);
     /* Otherwise, it was an import, export, etc. */
 
     vStringDelete (directive);
 }
 
-static void findErlangTags (void)
+static void findElixirTags (void)
 {
     vString *const module = vStringNew ();
     const unsigned char *line;
@@ -159,30 +164,30 @@ static void findErlangTags (void)
     {
         const unsigned char *cp = line;
 
-        if (*cp == '%')  /* skip initial comment */
+        if (*cp == '#')  /* skip initial comment */
             continue;
         if (*cp == '"')  /* strings sometimes start in column one */
             continue;
 
-        if ( *cp == '-')
+        if ( *cp == 'd')
         {
-            ++cp;  /* Move off of the '-' */
+            /* ++cp;  #<{(| Move off of the '-' |)}># */
             parseDirective(cp, module);
         }
-        else if (isIdentifierFirstCharacter ((int) *cp))
-            parseFunctionTag (cp, module);
+        /* else if (isIdentifierFirstCharacter ((int) *cp)) */
+        /*     parseFunctionTag (cp, module); */
     }
     vStringDelete (module);
 }
 
-extern parserDefinition *ErlangParser (void)
+extern parserDefinition *ElixirParser (void)
 {
-    static const char *const extensions[] = { "erl", "ERL", "hrl", "HRL", NULL };
-    parserDefinition *def = parserNew ("Erlang");
-    def->kinds = ErlangKinds;
-    def->kindCount = KIND_COUNT (ErlangKinds);
+    static const char *const extensions[] = { "ex", "exs", NULL };
+    parserDefinition *def = parserNew ("Elixir");
+    def->kinds = ElixirKinds;
+    def->kindCount = KIND_COUNT (ElixirKinds);
     def->extensions = extensions;
-    def->parser = findErlangTags;
+    def->parser = findElixirTags;
     return def;
 }
 
