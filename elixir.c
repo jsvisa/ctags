@@ -1,7 +1,7 @@
 /*
-*   $Id: elixir.c 443 2006-05-30 04:37:13Z darren $
+*   $Id: elixir.c 443 2014-03-05 04:37:13Z darren $
 *
-*   Copyright (c) 2003, Brent Fulgham <bfulgham@debian.org>
+*   Copyright (c) 2014, jsvisa <delweng@gmail.com>
 *
 *   This source code is released for free distribution under the terms of the
 *   GNU General Public License.
@@ -10,6 +10,7 @@
 *   files.  Some of the parsing constructs are based on the Emacs 'etags'
 *   program by Francesco Potori <pot@gnu.org>
 */
+
 /*
 *   INCLUDE FILES
 */
@@ -51,14 +52,7 @@ static boolean isIdentifierFirstCharacter (int c)
 
 static boolean isIdentifierCharacter (int c)
 {
-    return (boolean) (isalnum (c) || c == '_' || c == ':');
-}
-
-static const unsigned char *skipSpace (const unsigned char *cp)
-{
-    while (isspace ((int) *cp))
-        ++cp;
-    return cp;
+    return (boolean) (isalnum (c) || c == '_' || c == '.');
 }
 
 static const unsigned char *parseIdentifier (
@@ -72,6 +66,14 @@ static const unsigned char *parseIdentifier (
     }
     vStringTerminate (identifier);
     return cp;
+}
+
+static void skipWhitespace (const unsigned char** cp)
+{
+    while (isspace (**cp))
+    {
+        ++*cp;
+    }
 }
 
 static void makeMemberTag (
@@ -136,13 +138,11 @@ static void parseDirective (const unsigned char *cp, vString *const module)
     vString *const directive = vStringNew ();
     const char *const drtv = vStringValue (directive);
     cp = parseIdentifier (cp, directive);
-    cp = skipSpace (cp);
+    skipWhitespace (&cp);
     /* if (*cp == '(') */
     /*     ++cp; */
 
-    if (strcmp (drtv, "def") == 0)
-        parseSimpleTag (cp, K_FUNCTION);
-    else if(strcmp (drtv, "defp") == 0)
+    if (strcmp (drtv, "def") == 0 || strcmp (drtv, "defp") == 0)
         parseSimpleTag (cp, K_FUNCTION);
     else if (strcmp (drtv, "defmacro") == 0)
         parseSimpleTag (cp, K_MACRO);
@@ -150,7 +150,7 @@ static void parseDirective (const unsigned char *cp, vString *const module)
         parseSimpleTag (cp, K_RECORD);
     else if (strcmp (drtv, "defmodule") == 0)
         parseModuleTag (cp, module);
-    /* Otherwise, it was an import, export, etc. */
+    /* Otherwise, it was an import, require, etc. */
 
     vStringDelete (directive);
 }
@@ -164,14 +164,15 @@ static void findElixirTags (void)
     {
         const unsigned char *cp = line;
 
+        skipWhitespace(&cp);
+
         if (*cp == '#')  /* skip initial comment */
             continue;
-        if (*cp == '"')  /* strings sometimes start in column one */
+        if (*cp == '@')  /* strings sometimes start in column one */
             continue;
 
-        if ( *cp == 'd')
+        if (*cp == 'd')
         {
-            /* ++cp;  #<{(| Move off of the '-' |)}># */
             parseDirective(cp, module);
         }
         /* else if (isIdentifierFirstCharacter ((int) *cp)) */
