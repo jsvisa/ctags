@@ -559,8 +559,7 @@ ac_hostname=`(hostname || uname -n) 2>/dev/null | sed 1q`
 #
 # Initializations.
 #
-# ac_default_prefix=/usr/local
-ac_default_prefix=./
+ac_default_prefix=/usr
 ac_clean_files=
 ac_config_libobj_dir=.
 LIBOBJS=
@@ -686,10 +685,10 @@ ac_init_version=false
 # The variables have the same names as the options, with
 # dashes changed to underlines.
 cache_file=/dev/null
-exec_prefix=`pwd`/
+exec_prefix=NONE
 no_create=
 no_recursion=
-prefix=`pwd`/
+prefix=NONE
 program_prefix=NONE
 program_suffix=NONE
 program_transform_name=s,x,x,

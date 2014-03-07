@@ -93,6 +93,7 @@ static void makeMemberTag (
     }
 }
 
+/* module */
 static void parseModuleTag (const unsigned char *cp, vString *const module)
 {
     vString *const identifier = vStringNew ();
@@ -104,6 +105,7 @@ static void parseModuleTag (const unsigned char *cp, vString *const module)
     vStringDelete (identifier);
 }
 
+/* record and define */
 static void parseSimpleTag (const unsigned char *cp, erlangKind kind)
 {
     vString *const identifier = vStringNew ();
@@ -112,11 +114,13 @@ static void parseSimpleTag (const unsigned char *cp, erlangKind kind)
     vStringDelete (identifier);
 }
 
+/* functions */
 static void parseFunctionTag (const unsigned char *cp, vString *const module)
 {
     vString *const identifier = vStringNew ();
     parseIdentifier (cp, identifier);
-    makeMemberTag (identifier, K_FUNCTION, module);
+    makeSimpleTag (identifier, ErlangKinds, K_FUNCTION);
+    /* makeMemberTag (identifier, K_FUNCTION, module); */
     vStringDelete (identifier);
 }
 
