@@ -49,7 +49,7 @@ static kindOption ElixirKinds[] = {
 
 static boolean isIdentifierCharacter (int c)
 {
-    return (boolean) (isalnum (c) || c == '_' || c == '.');
+    return (boolean) (isalnum (c) || c == '_' || c == '?' || c == '!');
 }
 
 static const unsigned char *parseIdentifier (
